@@ -2,9 +2,15 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { EyeOff, LogIn, Lock, User2, Mail } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { Form as FormRouter, Link, useNavigation } from 'react-router';
+import {
+  Form as FormRouter,
+  Link,
+  redirect,
+  useNavigation,
+} from 'react-router';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Button } from '~/components/ui/button';
+import { signUp } from 'aws-amplify/auth';
 import {
   Form,
   FormControl,
@@ -18,15 +24,6 @@ import { PasswordStrength } from '~/components/ui/password-strength';
 import type { Route } from './+types/signup';
 
 const FormSchema = z.object({
-  username: z
-    .string()
-    .min(1, 'Username is required')
-    .min(3, 'Username must be at least 3 characters long')
-    .max(20, 'Username cannot be more than 20 characters')
-    .regex(
-      /^[a-zA-Z0-9_]+$/,
-      'Username can only contain letters, numbers, and underscores'
-    ),
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
   password: z
     .string()
@@ -47,7 +44,6 @@ export default function SignUp({ actionData }: Route.ComponentProps) {
   const form = useForm({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      username: '',
       email: '',
       password: '',
     },
@@ -75,22 +71,6 @@ export default function SignUp({ actionData }: Route.ComponentProps) {
         )}
         <Form {...form}>
           <FormRouter method='post' className='w-full flex flex-col gap-6'>
-            <FormField
-              control={form.control}
-              name='email'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder='Username'
-                      startAdornment={<User2 />}
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name='email'
@@ -170,7 +150,19 @@ export async function action({ request }: Route.ActionArgs) {
   const payload = Object.fromEntries(await request.formData());
   try {
     const schema = FormSchema.parse(payload);
-    console.log('Parsed data:', schema);
+    const { email, password } = schema;
+    const { nextStep, userId } = await signUp({
+      username: email,
+      password,
+      options: {
+        userAttributes: {
+          email,
+        },
+      },
+    });
+    if (nextStep.signUpStep === 'CONFIRM_SIGN_UP') {
+      return redirect('/confirm-signup');
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {
@@ -179,7 +171,7 @@ export async function action({ request }: Route.ActionArgs) {
     } else {
       console.error('Unexpected error:', error);
       return {
-        error: 'An unexpected error occurred.',
+        error: `An unexpected error occurred. Please try again. ${error}`,
       };
     }
   }
