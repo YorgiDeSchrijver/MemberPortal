@@ -1,38 +1,53 @@
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { EyeOff, LogIn, Lock, User2, Mail } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-
-import { EyeOff, Lock, LogIn, User2 } from 'lucide-react';
-import { Form as FormRouter } from 'react-router';
-
+import { Form as FormRouter, Link, useNavigation } from 'react-router';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Button } from '~/components/ui/button';
 import {
   Form,
   FormControl,
-  FormField,
   FormItem,
+  FormField,
   FormLabel,
-  FormMessage,
 } from '~/components/ui/form';
 import { Input } from '~/components/ui/input';
-
-import { Button } from '~/components/ui/button';
-import { Link, useNavigation } from 'react-router';
-import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
-import type { Route } from './+types/login';
 import { Spinner } from '~/components/ui/spinner';
+import { PasswordStrength } from '~/components/ui/password-strength';
+import type { Route } from './+types/signup';
 
 const FormSchema = z.object({
+  username: z
+    .string()
+    .min(1, 'Username is required')
+    .min(3, 'Username must be at least 3 characters long')
+    .max(20, 'Username cannot be more than 20 characters')
+    .regex(
+      /^[a-zA-Z0-9_]+$/,
+      'Username can only contain letters, numbers, and underscores'
+    ),
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
+  password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(8, 'Password must be at least 8 characters long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(
+      /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
+      'Password must contain at least one special character'
+    ),
 });
 
-export default function Login({ actionData }: Route.ComponentProps) {
+export default function SignUp({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === 'submitting';
 
-  const form = useForm<z.infer<typeof FormSchema>>({
+  const form = useForm({
     resolver: zodResolver(FormSchema),
     defaultValues: {
+      username: '',
       email: '',
       password: '',
     },
@@ -47,10 +62,10 @@ export default function Login({ actionData }: Route.ComponentProps) {
           className='w-12 pb-6'
         />
         <h1 className='text-heading-sm font-extrabold text-gray-800'>
-          Welcome Back.
+          Let's Create Your Account.
         </h1>
         <p className='text-paragraph-md text-gray-600 mb-10'>
-          Let's sign in to your account and get started.
+          Sign up for an account to become a member.
         </p>
         {actionData?.error && (
           <Alert variant='destructive' className='mb-4'>
@@ -65,11 +80,27 @@ export default function Login({ actionData }: Route.ComponentProps) {
               name='email'
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder='Username'
+                      startAdornment={<User2 />}
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='email'
+              render={({ field }) => (
+                <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
                     <Input
                       placeholder='Email Address'
-                      startAdornment={<User2 />}
+                      startAdornment={<Mail />}
                       {...field}
                     />
                   </FormControl>
@@ -83,24 +114,20 @@ export default function Login({ actionData }: Route.ComponentProps) {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder='Password'
-                      type='password'
-                      startAdornment={<Lock />}
-                      endAdornment={<EyeOff />}
-                      {...field}
-                    />
+                    <>
+                      <Input
+                        placeholder='Password'
+                        type='password'
+                        startAdornment={<Lock />}
+                        endAdornment={<EyeOff />}
+                        {...field}
+                      />
+                      <PasswordStrength value={field.value} showStrength />
+                    </>
                   </FormControl>
                 </FormItem>
               )}
             />
-            <Link
-              to='#'
-              className='text-sm text-brand-600 font-bold text-right -mt-3'
-            >
-              Forgot Password
-            </Link>
-
             <Button
               className='w-full mt-2 text-md'
               variant='default'
@@ -112,7 +139,7 @@ export default function Login({ actionData }: Route.ComponentProps) {
                 <Spinner />
               ) : (
                 <>
-                  <span>Sign in</span>
+                  <span>Sign Up</span>
                   <LogIn />
                 </>
               )}
@@ -123,12 +150,12 @@ export default function Login({ actionData }: Route.ComponentProps) {
               color='gray'
               size='lg'
             >
-              Sign in With Google
+              Sign Up With Google
             </Button>
             <span className='text-sm font-bold text-gray-800 text-center'>
               Don't have an account?{' '}
-              <Link to='#' className='text-brand-600'>
-                Sign Up
+              <Link to='/login' className='text-brand-600'>
+                Sign In.
               </Link>
             </span>
           </FormRouter>
