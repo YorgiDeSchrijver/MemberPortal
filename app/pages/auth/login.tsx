@@ -20,7 +20,10 @@ import { Link, useNavigation } from 'react-router';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Spinner } from '~/components/ui/spinner';
 import type { Route } from './+types/login';
-import { getCurrentUser, signIn, signInWithRedirect } from 'aws-amplify/auth';
+import {
+  getCurrentUser,
+  signIn,
+} from 'aws-amplify/auth';
 
 const FormSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
@@ -29,10 +32,10 @@ const FormSchema = z.object({
 
 export async function loader({}: Route.LoaderArgs) {
   try {
-    const { userId } = await getCurrentUser();
+    await getCurrentUser();
     return redirect('/dashboard');
   } catch (error) {
-    redirect('/login');
+    return null;
   }
 }
 
@@ -74,6 +77,7 @@ export default function Login({ actionData }: Route.ComponentProps) {
             className='w-full flex flex-col gap-6'
             suppressHydrationWarning={true}
           >
+            <input type='hidden' name='intent' value='login' />
             <FormField
               control={form.control}
               name='email'
