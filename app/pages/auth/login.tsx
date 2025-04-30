@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
 import { EyeOff, Lock, LogIn, User2 } from 'lucide-react';
-import { Form as FormRouter } from 'react-router';
+import { Form as FormRouter, redirect } from 'react-router';
 
 import {
   Form,
@@ -20,11 +20,21 @@ import { Link, useNavigation } from 'react-router';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Spinner } from '~/components/ui/spinner';
 import type { Route } from './+types/login';
+import { getCurrentUser, signIn, signInWithRedirect } from 'aws-amplify/auth';
 
 const FormSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
 });
+
+export async function loader({}: Route.LoaderArgs) {
+  try {
+    const { userId } = await getCurrentUser();
+    return redirect('/dashboard');
+  } catch (error) {
+    redirect('/login');
+  }
+}
 
 export default function Login({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
@@ -59,7 +69,11 @@ export default function Login({ actionData }: Route.ComponentProps) {
           </Alert>
         )}
         <Form {...form}>
-          <FormRouter method='post' className='w-full flex flex-col gap-6'>
+          <FormRouter
+            method='post'
+            className='w-full flex flex-col gap-6'
+            suppressHydrationWarning={true}
+          >
             <FormField
               control={form.control}
               name='email'
@@ -143,7 +157,11 @@ export async function action({ request }: Route.ActionArgs) {
   const payload = Object.fromEntries(await request.formData());
   try {
     const schema = FormSchema.parse(payload);
-    console.log('Parsed data:', schema);
+    const { email, password } = schema;
+    const { nextStep } = await signIn({ username: email, password });
+    if (nextStep.signInStep === 'DONE') {
+      redirect('/dashboard');
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {
