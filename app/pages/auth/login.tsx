@@ -88,6 +88,7 @@ export default function Login({ actionData }: Route.ComponentProps) {
                     <Input
                       placeholder='Email Address'
                       startAdornment={<User2 />}
+                      suppressHydrationWarning={true}
                       {...field}
                     />
                   </FormControl>
@@ -106,6 +107,7 @@ export default function Login({ actionData }: Route.ComponentProps) {
                       type='password'
                       startAdornment={<Lock />}
                       endAdornment={<EyeOff />}
+                      suppressHydrationWarning={true}
                       {...field}
                     />
                   </FormControl>
