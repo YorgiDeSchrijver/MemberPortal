@@ -135,20 +135,20 @@ export default function Login({ actionData }: Route.ComponentProps) {
                 </>
               )}
             </Button>
-            <Button
+            {/* <Button
               className='w-full text-md -mt-3'
               variant='outline'
               color='gray'
               size='lg'
             >
               Sign in With Google
-            </Button>
-            <span className='text-sm font-bold text-gray-800 text-center'>
+            </Button> */}
+            {/* <span className='text-sm font-bold text-gray-800 text-center'>
               Don't have an account?{' '}
               <Link to='/signup' className='text-brand-600'>
                 Sign Up
               </Link>
-            </span>
+            </span> */}
           </FormRouter>
         </Form>
       </div>
