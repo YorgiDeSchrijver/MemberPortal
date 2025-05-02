@@ -13,7 +13,8 @@ export default [
     layout('pages/dashboard/layout.tsx', [
       index('pages/dashboard/dashboard.tsx'),
       route('logout', 'pages/dashboard/logout.tsx'),
-      route('website', 'pages/dashboard/website.tsx'),
+      route('praesidium', 'pages/dashboard/website/praesidium.tsx'),
+      route('sponsors', 'pages/dashboard/website/sponsors.tsx'),
     ]),
   ]),
   route('*', 'pages/404.tsx'),

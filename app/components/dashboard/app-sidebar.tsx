@@ -1,21 +1,27 @@
-import { House, LogOut, PanelTop } from 'lucide-react';
-import { NavLink, useSubmit } from 'react-router';
+import { ChevronRight, Globe, House, LogOut, PanelTop } from 'lucide-react';
+import { Link, NavLink, useSubmit } from 'react-router';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarProvider,
   SidebarSeparator,
 } from '~/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import type { FetchUserAttributesOutput } from 'aws-amplify/auth';
+import { Collapsible } from '@radix-ui/react-collapsible';
+import { CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 
 export default function AppSidebar(user: FetchUserAttributesOutput) {
   let submit = useSubmit();
@@ -51,25 +57,56 @@ export default function AppSidebar(user: FetchUserAttributesOutput) {
               <SidebarMenuItem>
                 <NavLink to='/dashboard' end>
                   {({ isActive }) => (
-                    <SidebarMenuButton size='lg' isActive={isActive}>
+                    <SidebarMenuButton  isActive={isActive}>
                       <House />
                       <span>Home</span>
                     </SidebarMenuButton>
                   )}
                 </NavLink>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <NavLink to='/dashboard/website' end>
-                  {({ isActive }) => (
-                    <SidebarMenuButton size='lg' isActive={isActive}>
-                      <PanelTop />
-                      <span>Website</span>
-                    </SidebarMenuButton>
-                  )}
-                </NavLink>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarMenu>
+            <Collapsible
+              asChild
+              defaultOpen={false}
+              className='group/collapsible'
+            >
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton>
+                    <Globe />
+                    <span>Website</span>
+                    <ChevronRight className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    <SidebarMenuSubItem>
+                      <NavLink to='/dashboard/praesidium' end>
+                        {({ isActive }) => (
+                          <SidebarMenuSubButton isActive={isActive}>
+                            <span>Praesidium</span>
+                          </SidebarMenuSubButton>
+                        )}
+                      </NavLink>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <NavLink to='/dashboard/sponsors' end>
+                        {({ isActive }) => (
+                          <SidebarMenuSubButton isActive={isActive}>
+                            <span>Sponsers</span>
+                          </SidebarMenuSubButton>
+                        )}
+                      </NavLink>
+                    </SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+          </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
