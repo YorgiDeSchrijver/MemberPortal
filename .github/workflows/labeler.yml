@@ -4,114 +4,56 @@ on:
   issues:
     types: [opened, edited]
 
+permissions:
+  issues: write
+  contents: read
+
 jobs:
   label_by_title:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
     steps:
       - name: Apply label based on issue title
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const title = context.payload.issue.title.toLowerCase();
             console.log(`Processing issue #${context.payload.issue.number}: "${context.payload.issue.title}"`);
             
-            // Define prefix to label mappings
-            const prefixMappings = {
-              'feature/': ['feature', 'enhancement'],
-              'bug/': ['bug', 'fix'],
-              'enhancement/': ['enhancement'],
-              'docs/': ['documentation'],
-              'test/': ['testing'],
-              'chore/': ['chore'],
-              'refactor/': ['refactor'],
-              'perf/': ['performance'],
-              'security/': ['security'],
-              'ci/': ['ci'],
-              'config/': ['configuration'],
-              'ui/': ['ui'],
-              'ux/': ['ux'],
-              'api/': ['api'],
-              'data/': ['data'],
-            };
-            
-            // Handle nested prefixes (e.g., feature/ui/ would get both 'feature' and 'ui' labels)
-            const labelsToAdd = new Set();
-            
-            try {
-              // Check for primary prefix matches
-              for (const [prefix, labels] of Object.entries(prefixMappings)) {
-                if (title.startsWith(prefix)) {
-                  labels.forEach(label => labelsToAdd.add(label));
-                  
-                  // Check for nested prefixes
-                  const remaining = title.substring(prefix.length);
-                  for (const [nestedPrefix, nestedLabels] of Object.entries(prefixMappings)) {
-                    if (remaining.startsWith(nestedPrefix)) {
-                      nestedLabels.forEach(label => labelsToAdd.add(label));
-                    }
-                  }
-                  
-                  break; // Only match the first primary prefix
-                }
-              }
-              
-              // Add default label if no match found
-              if (labelsToAdd.size === 0) {
-                labelsToAdd.add('needs-triage');
-                console.log('No prefix match found, adding "needs-triage" label');
-              } else {
-                console.log(`Adding labels: ${Array.from(labelsToAdd).join(', ')}`);
-              }
-              
-              // Apply the labels
-              if (labelsToAdd.size > 0) {
+            const labelsToAdd = [];
+
+            if (title.startsWith('feature/')) {
+              labelsToAdd.push('feature');
+            } else if (title.startsWith('bug/')) {
+              labelsToAdd.push('bug');
+            } else if (title.startsWith('enhancement/')) {
+              labelsToAdd.push('enhancement');
+            } else if (title.startsWith('docs/')) {
+              labelsToAdd.push('documentation');
+            } else if (title.startsWith('test/')) {
+              labelsToAdd.push('testing');
+            } else if (title.startsWith('chore/')) {
+              labelsToAdd.push('chore');
+            } else if (title.startsWith('refactor/')) {
+              labelsToAdd.push('refactor');
+            } else if (title.startsWith('security/')) {
+              labelsToAdd.push('security');
+            } else {
+              // Optional: Add a default label if no match
+              labelsToAdd.push('needs-triage');
+            }
+
+            if (labelsToAdd.length > 0) {
+              try {
+                console.log(`Adding labels: ${labelsToAdd.join(', ')}`);
                 await github.rest.issues.addLabels({
                   issue_number: context.payload.issue.number,
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  labels: Array.from(labelsToAdd)
+                  labels: labelsToAdd
                 });
+              } catch (error) {
+                console.error(`Error adding labels: ${error.message}`);
+                core.setFailed(`Failed to add labels: ${error.message}`);
               }
-              
-              // Optional: Remove outdated labels when title changes
-              if (context.payload.action === 'edited' && context.payload.changes.title) {
-                const oldTitle = context.payload.changes.title.from.toLowerCase();
-                const oldLabelsToAdd = new Set();
-                
-                // Find labels that would have been applied to the old title
-                for (const [prefix, labels] of Object.entries(prefixMappings)) {
-                  if (oldTitle.startsWith(prefix)) {
-                    labels.forEach(label => oldLabelsToAdd.add(label));
-                    break;
-                  }
-                }
-                
-                // Find labels that are in oldLabelsToAdd but not in labelsToAdd
-                const labelsToRemove = Array.from(oldLabelsToAdd).filter(label => !labelsToAdd.has(label));
-                
-                if (labelsToRemove.length > 0) {
-                  console.log(`Removing outdated labels: ${labelsToRemove.join(', ')}`);
-                  
-                  for (const label of labelsToRemove) {
-                    try {
-                      await github.rest.issues.removeLabel({
-                        issue_number: context.payload.issue.number,
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        name: label
-                      });
-                    } catch (error) {
-                      // Ignore errors if the label doesn't exist
-                      if (error.status !== 404) {
-                        throw error;
-                      }
-                    }
-                  }
-                }
-              }
-            } catch (error) {
-              console.error(`Error processing labels: ${error.message}`);
-              core.setFailed(`Failed to process labels: ${error.message}`);
             }
